@@ -3,6 +3,9 @@ import { COLOR_SCHEMES } from "./color-scheme.js";
 import { generateComplexEquation } from "./equation.js";
 import { drawNewtonFractal } from "./newton-fractal.js";
 
+import starFilled from "./star-filled.svg";
+import starEmpty from "./star.svg";
+
 /** Hashes are kept small so shared links stay readable. */
 const HASH_RANGE = 1_000_000;
 
@@ -56,6 +59,14 @@ async function copyText(text: string) {
     return;
   }
 
+  let ratingGiven = false;
+  function resetStars() {
+    ratingGiven = false;
+    for (const star of stars) {
+      star.src = starEmpty;
+    }
+  }
+
   const hashValue: HTMLDivElement = document.getElementById(
     "hash-value",
   )! as HTMLDivElement;
@@ -78,17 +89,17 @@ async function copyText(text: string) {
     "download",
   )! as HTMLButtonElement;
   const stars: [
-    HTMLDivElement,
-    HTMLDivElement,
-    HTMLDivElement,
-    HTMLDivElement,
-    HTMLDivElement,
+    HTMLImageElement,
+    HTMLImageElement,
+    HTMLImageElement,
+    HTMLImageElement,
+    HTMLImageElement,
   ] = [
-    document.getElementById("star-1")! as HTMLDivElement,
-    document.getElementById("star-2")! as HTMLDivElement,
-    document.getElementById("star-3")! as HTMLDivElement,
-    document.getElementById("star-4")! as HTMLDivElement,
-    document.getElementById("star-5")! as HTMLDivElement,
+    document.getElementById("star-1")! as HTMLImageElement,
+    document.getElementById("star-2")! as HTMLImageElement,
+    document.getElementById("star-3")! as HTMLImageElement,
+    document.getElementById("star-4")! as HTMLImageElement,
+    document.getElementById("star-5")! as HTMLImageElement,
   ];
 
   let currentHash = hashFromUrl() ?? randomHash();
@@ -100,6 +111,7 @@ async function copyText(text: string) {
    *   omit to leave history untouched (when the browser already navigated).
    */
   function render(hash: number, historyMode: "replace" | "push") {
+    resetStars();
     const { equation, sides, colorModeIndex, colorSchemeIndex } =
       generateComplexEquation(hash);
     const colorMode = COLOR_MODES[colorModeIndex];
@@ -178,6 +190,10 @@ async function copyText(text: string) {
 
   for (const star of stars) {
     star.addEventListener('click', () => {
+      if (ratingGiven) return;
+      ratingGiven = true;
+      star.src = starFilled;
+
       fetch('https://fractal-hash-backend.mousetail.nl/submit', {
         method: 'POST',
         body: JSON.stringify({
