@@ -77,6 +77,19 @@ async function copyText(text: string) {
   const downloadButton: HTMLButtonElement = document.getElementById(
     "download",
   )! as HTMLButtonElement;
+  const stars: [
+    HTMLDivElement,
+    HTMLDivElement,
+    HTMLDivElement,
+    HTMLDivElement,
+    HTMLDivElement,
+  ] = [
+    document.getElementById("star-1")! as HTMLDivElement,
+    document.getElementById("star-2")! as HTMLDivElement,
+    document.getElementById("star-3")! as HTMLDivElement,
+    document.getElementById("star-4")! as HTMLDivElement,
+    document.getElementById("star-5")! as HTMLDivElement,
+  ];
 
   let currentHash = hashFromUrl() ?? randomHash();
   let disposeFractal: null | (() => void) = null;
@@ -162,6 +175,24 @@ async function copyText(text: string) {
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     }, "image/png");
   });
+
+  for (const star of stars) {
+    star.addEventListener('click', () => {
+      fetch('https://fractal-hash-backend.mousetail.nl/submit', {
+        method: 'POST',
+        body: JSON.stringify({
+          equation: equationValue.textContent,
+          colors: colorValue.textContent,
+          mode: modeValue.textContent,
+          rating: +star.id.split('-')[1],
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        mode: 'cors',
+      });
+    })
+  }
 
   render(currentHash, "replace");
 })();

@@ -86,3 +86,14 @@ body {
 #widget a {
     color: white;
 }
+
+.stars {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+
+    & img {
+        width: 1rem;
+        color: white;
+        cursor: pointer;
+    }
+}
