@@ -76,20 +76,21 @@
 
       #widget button:hover {
         background: rgba(255, 255, 255, 0.16);
-        border-color: rgba(255, 255, 255, 0.3);
-      }
-
-      #widget button:active {
-        background: rgba(255, 255, 255, 0.24);
-      }
-
-      #widget button:focus-visible {
-        outline: 1px solid rgba(255, 255, 255, 0.6);
       }
 
       .h {
         display: grid;
         grid-template-columns: 1fr 1fr 1fr;
+      }
+
+      #widget hr {
+          border-top: 1px solid white;
+          width: 100%;
+          height: 0;
+      }
+
+      #widget a {
+          color: white;
       }
     </style>
   </head>
@@ -122,6 +123,11 @@
         <button type="button" id="regenerate">Regenerate</button>
         <button type="button" id="share">Share</button>
         <button type="button" id="download">Download</button>
+      </div>
+      <hr>
+      <div class="h">
+      <a href="https://github.com/mousetail/fractal-hash">GitHub</a> <a href="https://mousetail.nl">Mousetail</a>
+      <a href="https://discord.gg/ugbfdgzpjK">Discord</a>
       </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
