@@ -1,12 +1,17 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Fractal Hash</title>
     <style>
-      *, *::before, *::after { box-sizing: border-box; }
-      html, body {
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html,
+      body {
         margin: 0;
         padding: 0;
         width: 100%;
@@ -30,24 +35,17 @@
         flex-direction: column;
         gap: 10px;
         padding: 12px;
-        font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-        color: rgba(255, 255, 255, 0.92);
-        background: rgba(8, 8, 12, 0.55);
-        border: 1px solid rgba(255, 255, 255, 0.14);
-        border-radius: 10px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
-        -webkit-backdrop-filter: blur(12px) saturate(140%);
-        backdrop-filter: blur(12px) saturate(140%);
+        font:
+          12px/1.5 ui-monospace,
+          monospace;
+        color: #fff;
+        background: #000;
+        border: 1px solid #fff;
       }
-
-      #widget .field + .field { margin-top: 8px; }
 
       #widget .label {
         display: block;
         font-size: 10px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: rgba(255, 255, 255, 0.45);
       }
 
       #widget .value {
@@ -68,11 +66,12 @@
         padding: 7px 4px;
         font: inherit;
         color: inherit;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        border-radius: 6px;
+        background: #000;
+        border: 1px solid #fff;
         cursor: pointer;
-        transition: background 120ms ease, border-color 120ms ease;
+        transition:
+          background 120ms ease,
+          border-color 120ms ease;
       }
 
       #widget button:hover {
@@ -80,18 +79,39 @@
         border-color: rgba(255, 255, 255, 0.3);
       }
 
-      #widget button:active { background: rgba(255, 255, 255, 0.24); }
+      #widget button:active {
+        background: rgba(255, 255, 255, 0.24);
+      }
 
-      #widget button:focus-visible { outline: 1px solid rgba(255, 255, 255, 0.6); }
+      #widget button:focus-visible {
+        outline: 1px solid rgba(255, 255, 255, 0.6);
+      }
+
+      .h {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+      }
     </style>
   </head>
   <body>
     <canvas id="canvas"></canvas>
     <div id="widget">
       <div class="info">
-        <div class="field">
-          <span class="label">Hash</span>
-          <span class="value" id="hash-value">&mdash;</span>
+        <div class="h">
+          <div class="field">
+            <span class="label">Hash</span>
+            <span class="value" id="hash-value">&mdash;</span>
+          </div>
+
+          <div class="field">
+            <span class="label">Colors</span>
+            <span class="value" id="color-value">&mdash;</span>
+          </div>
+
+          <div class="mode">
+            <span class="label">Mode</span>
+            <span class="value" id="mode-value">&mdash;</span>
+          </div>
         </div>
         <div class="field">
           <span class="label">f(z)</span>
@@ -104,6 +124,6 @@
         <button type="button" id="download">Download</button>
       </div>
     </div>
-    <script type="module" src="/src/main.js"></script>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
