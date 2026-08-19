@@ -10,6 +10,7 @@
  * Interface implemented by every equation in this module:
  *   glslForm:           string  — GLSL expression for f(z)
  *   derivativeGlslForm: string  — GLSL expression for f'(z)
+ *   mathForm:           string  — human-readable expression for f(z)
  *   zeros:              Cx[]    — points where f(z) = 0
  */
 
@@ -60,6 +61,45 @@ const glslVec2 = (c) => `vec2(${glslFloat(c[0])}, ${glslFloat(c[1])})`;
 
 /** Formats a complex number as a GLSL `vec2` literal. @param {Cx} c */
 export const toGlslVec2 = (c) => glslVec2(toComplex(c));
+
+// ---- human-readable formatting ----
+
+/** Rounds to at most two decimals and drops trailing zeros. */
+function mathFloat(x) {
+    const v = Math.abs(x) < 5e-3 ? 0 : x;
+    return String(Number(v.toFixed(2)));
+}
+
+/** A signed term such as ` - 0.5i`, or '' when the coefficient rounds to zero. */
+function mathTerm(value, unit = '') {
+    const s = mathFloat(Math.abs(value));
+    if (s === '0') return '';
+    const body = unit && s === '1' ? unit : `${s}${unit}`;
+    return `${value < 0 ? ' - ' : ' + '}${body}`;
+}
+
+/** Formats a complex number, parenthesised when it has both parts: `(1.2 - 0.5i)`. */
+function mathComplex(c) {
+    const re = mathFloat(c[0]);
+    const im = mathTerm(c[1], 'i');
+    if (!im) return re;
+    if (re === '0') return im.replace(' + ', '').replace(' - ', '-');
+    return `(${re}${im})`;
+}
+
+/** `input - c`, with the subtraction folded into the printed terms. */
+function mathShift(input, c) {
+    const body = `${input}${mathTerm(-c[0])}${mathTerm(-c[1], 'i')}`;
+    return body === input ? input : `(${body})`;
+}
+
+/** `c * input`, dropping the factor when it is ±1. */
+function mathScale(c, input) {
+    const s = mathComplex(c);
+    if (s === '1') return input;
+    if (s === '-1') return `-${input}`;
+    return `${s}·${input}`;
+}
 
 /**
  * Complex helpers required by the emitted expressions. Prepend this to a
@@ -123,6 +163,12 @@ export class Equation {
      */
     glslDerivative(input) { throw new Error(`${this.constructor.name} must implement glslDerivative(input)`); }
 
+    /**
+     * @param {string} input human-readable expression of the input
+     * @returns {string} human-readable expression for f(input)
+     */
+    math(input) { throw new Error(`${this.constructor.name} must implement math(input)`); }
+
     /** @param {Cx} z @returns {Cx} f(z) */
     evaluate(z) { throw new Error(`${this.constructor.name} must implement evaluate(z)`); }
 
@@ -137,6 +183,9 @@ export class Equation {
 
     /** @returns {string} */
     get derivativeGlslForm() { return this.glslDerivative(Equation.INPUT); }
+
+    /** @returns {string} */
+    get mathForm() { return this.math(Equation.INPUT); }
 }
 
 // ---- primitives ----
@@ -166,6 +215,8 @@ export class SinEquation extends Equation {
         const w = glslVec2(this.frequency);
         return `cmul(${w}, ccos(cmul(${w}, ${input})))`;
     }
+
+    math(input) { return `sin(${mathScale(this.frequency, input)})`; }
 
     evaluate(z) { return cSin(cMul(this.frequency, z)); }
 
@@ -208,6 +259,8 @@ export class CubicEquation extends Equation {
         return this.roots.map((r) => `(${input} - ${glslVec2(r)})`);
     }
 
+    math(input) { return this.roots.map((r) => mathShift(input, r)).join(''); }
+
     evaluate(z) {
         const [a, b, c] = this.roots.map((r) => cSub(z, r));
         return cMul(cMul(a, b), c);
@@ -246,6 +299,8 @@ export class AtanEquation extends Equation {
         return `cdiv(${a}, vec2(1.0, 0.0) + cmul(${w}, ${w}))`;
     }
 
+    math(input) { return `atan(${mathScale(this.angle, input)})`; }
+
     evaluate(z) { return cAtan(cMul(this.angle, z)); }
 
     evaluateDerivative(z) {
@@ -281,6 +336,8 @@ export class EquationMultiply extends Equation {
             ` + cmul(${this.a.glsl(input)}, ${this.b.glslDerivative(input)}))`;
     }
 
+    math(input) { return `${this.a.math(input)}·${this.b.math(input)}`; }
+
     evaluate(z) { return cMul(this.a.evaluate(z), this.b.evaluate(z)); }
 
     evaluateDerivative(z) {
@@ -314,6 +371,8 @@ export class OffsetInput extends Equation {
 
     glslDerivative(input) { return this.equation.glslDerivative(this.shifted(input)); }
 
+    math(input) { return this.equation.math(mathShift(input, [-this.offset[0], -this.offset[1]])); }
+
     evaluate(z) { return this.equation.evaluate(cAdd(z, this.offset)); }
 
     evaluateDerivative(z) { return this.equation.evaluateDerivative(cAdd(z, this.offset)); }
@@ -344,6 +403,8 @@ export class MultiplyInput extends Equation {
     glslDerivative(input) {
         return `cmul(${glslVec2(this.factor)}, ${this.equation.glslDerivative(this.scaled(input))})`;
     }
+
+    math(input) { return this.equation.math(mathScale(this.factor, input)); }
 
     evaluate(z) { return this.equation.evaluate(cMul(this.factor, z)); }
 

@@ -19,10 +19,91 @@
         width: 100%;
         height: 100%;
       }
+
+      #widget {
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        z-index: 10;
+        width: min(360px, calc(100vw - 32px));
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 12px;
+        font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        color: rgba(255, 255, 255, 0.92);
+        background: rgba(8, 8, 12, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 10px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+        -webkit-backdrop-filter: blur(12px) saturate(140%);
+        backdrop-filter: blur(12px) saturate(140%);
+      }
+
+      #widget .field + .field { margin-top: 8px; }
+
+      #widget .label {
+        display: block;
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.45);
+      }
+
+      #widget .value {
+        display: block;
+        max-height: 6.5em;
+        overflow-y: auto;
+        overflow-wrap: anywhere;
+        color: rgba(255, 255, 255, 0.92);
+      }
+
+      #widget .actions {
+        display: flex;
+        gap: 6px;
+      }
+
+      #widget button {
+        flex: 1;
+        padding: 7px 4px;
+        font: inherit;
+        color: inherit;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 120ms ease, border-color 120ms ease;
+      }
+
+      #widget button:hover {
+        background: rgba(255, 255, 255, 0.16);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+
+      #widget button:active { background: rgba(255, 255, 255, 0.24); }
+
+      #widget button:focus-visible { outline: 1px solid rgba(255, 255, 255, 0.6); }
     </style>
   </head>
   <body>
     <canvas id="canvas"></canvas>
+    <div id="widget">
+      <div class="info">
+        <div class="field">
+          <span class="label">Hash</span>
+          <span class="value" id="hash-value">&mdash;</span>
+        </div>
+        <div class="field">
+          <span class="label">f(z)</span>
+          <span class="value" id="equation-value">&mdash;</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" id="regenerate">Regenerate</button>
+        <button type="button" id="share">Share</button>
+        <button type="button" id="download">Download</button>
+      </div>
+    </div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

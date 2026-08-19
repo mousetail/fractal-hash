@@ -17,6 +17,7 @@ import {
  *   equation: import('./factors.js').Equation,
  *   glslForm: string,
  *   derivativeGlslForm: string,
+ *   mathForm: string,
  *   zeros: [number, number][],
  *   sides: number,
  *   colorMode: number,
@@ -31,6 +32,14 @@ export function generateComplexEquation(hash) {
         t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
         return ((t ^ t >>> 14) >>> 0) / 4294967296;
     }
+
+    // The camera is fixed (see `drawNewtonFractal`'s `scale`), so magnification
+    // is baked into the equation instead: every length — root positions and
+    // input offsets — grows by ZOOM, while frequencies and angles, which are
+    // inverse lengths, shrink by the same amount. Zeros therefore end up ZOOM
+    // times further apart on average, i.e. the view sits ZOOM times closer to
+    // the structure between them.
+    const ZOOM = 4;
 
     // Random helpers
     const randRange = (min, max) => min + random() * (max - min);
@@ -47,18 +56,27 @@ export function generateComplexEquation(hash) {
         return [mag * Math.cos(ang), mag * Math.sin(ang)];
     };
 
-    // Factories for the available primitives
+    // Factories for the available primitives. The cubic's roots are positions,
+    // so they spread out with ZOOM; the sine's frequency sets the spacing
+    // π/|frequency| between its zeros and the atan's angle sets the distance
+    // ±1/|angle| to its branch cuts, so both shrink instead.
     const primitives = {
-        cubic: () => new CubicEquation([randComplex(-1, 1), randComplex(-1, 1), randComplex(-1, 1)]),
-        sin: () => new SinEquation(randPolar(0.75, 6), { zeroCount: randInt(3, 9) }),
-        atan: () => new AtanEquation(randPolar(0.5, 4)),
+        cubic: () => new CubicEquation([
+            randComplex(-ZOOM, ZOOM),
+            randComplex(-ZOOM, ZOOM),
+            randComplex(-ZOOM, ZOOM),
+        ]),
+        sin: () => new SinEquation(randPolar(0.75 / ZOOM, 6 / ZOOM), { zeroCount: randInt(3, 9) }),
+        atan: () => new AtanEquation(randPolar(0.5 / ZOOM, 4 / ZOOM)),
     };
 
     // Randomly rotate/scale and shift the input of a primitive. A factor of i
     // turns sin into i*sinh, an offset moves the feature away from the origin.
     const decorate = (eq) => {
+        // A dimensionless factor: it rotates and mildly rescales, so it is left
+        // alone — scaling it as well would compound with the primitive's own.
         if (chance(0.6)) eq = new MultiplyInput(eq, randPolar(0.6, 1.6));
-        if (chance(0.5)) eq = new OffsetInput(eq, randComplex(-1, 1));
+        if (chance(0.5)) eq = new OffsetInput(eq, randComplex(-ZOOM, ZOOM));
         return eq;
     };
 
@@ -83,6 +101,7 @@ export function generateComplexEquation(hash) {
         equation,
         glslForm: equation.glslForm,
         derivativeGlslForm: equation.derivativeGlslForm,
+        mathForm: equation.mathForm,
         zeros: equation.zeros,
         sides,
         colorMode,
