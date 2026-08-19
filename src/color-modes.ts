@@ -23,9 +23,7 @@ export const COLORIZE_PARAMS =
 
 export type ColorMode = { name: string; glsl: string };
 /**
- * Coloring modes. Each entry is a GLSL snippet that assigns the output color
- * `color` from the arguments listed above. Exactly one snippet is injected into
- * the shader, the same way the equation and its zeros are.
+ * Coloring modes. Each entry is a GLSL snippet
  */
 export const COLOR_MODES: ColorMode[] = [
   {
@@ -38,22 +36,20 @@ export const COLOR_MODES: ColorMode[] = [
     name: "center distance",
     glsl: `color = palette(fract(-log2(max(distanceSquared, 1e-30)) * 0.07));`,
   },
-  // 2: smooth combined — iteration structure with distance-based sub-band correction
   {
     name: "smooth",
-    glsl: `float logDistance = -log2(max(distanceSquared, 1e-30));   // larger when closer to a zero
-    color = palette(fract(float(iterations) * 0.08 + logDistance * 0.05));`,
+    glsl: `float logDistance = smoothIter;   // larger when closer to a zero
+    color = palette(logDistance * 0.4);`,
   },
-  // 3: flat basins — the index of the zero, spread evenly over the palette.
-  // Points that reached no zero (rootIndex = -1) map to 0.0, distinct from every root.
   {
     name: "root",
     glsl: `color = palette(float(rootIndex + 1) / float(max(ZERO_COUNT, 1)));`,
   },
-
-  // 4: direction to the nearest zero, blended across each iteration band so
-  // the edges between bands disappear. Both directions are normalized first,
-  // otherwise the much longer lastDelta swamps the mix.
+  {
+    name: 'smooth-root',
+    glsl: `float logDistance = smoothIter;   // larger when closer to a zero
+    color = palette(logDistance * 0.1 + float(rootIndex + 1) / float(max(ZERO_COUNT, 1)));`,
+  },
   {
     name: "radial",
     glsl: `vec2 blended = mix(safeDir(lastDelta), safeDir(delta), bandPosition);
@@ -62,6 +58,21 @@ export const COLOR_MODES: ColorMode[] = [
     color = e* palette(0.5) + (1.0-e) * palette(1.0);
   `,
   },
+  {
+    name: 'spiral',
+    glsl: `vec2 blended = mix(safeDir(lastDelta), safeDir(delta), bandPosition);
+    vec2 direction = safeDir(blended);
+    float e=  rootIndex < 0 ? 0.0 : atan(direction.x, direction.y);
+    color = palette(e * 0.1 + float(rootIndex) * 0.2 + smoothIter * 0.2);`,
+  },
+  {
+    name: 'hard-edge-radial',
+    glsl: `vec2 blended = mix(safeDir(lastDelta), safeDir(delta), bandPosition);
+    vec2 direction = safeDir(blended);
+    float e=  rootIndex < 0 ? 0.0 : sin(atan(direction.x, direction.y)*3.0) * 0.5 + 0.5;
+    color = e > 0.5 ? palette(0.5): e>0.05 ? palette(1.0) : palette(0.1);
+  `,
+  }
 ];
 
 /** Number of coloring modes available to `drawNewtonFractal`. */
