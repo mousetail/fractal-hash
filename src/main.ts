@@ -1,6 +1,7 @@
 import { COLOR_MODES } from "./color-modes.js";
 import { COLOR_SCHEMES } from "./color-scheme.js";
 import { generateComplexEquation } from "./equation.js";
+import { images_promise } from "./images.js";
 import { drawNewtonFractal } from "./newton-fractal.js";
 
 import starFilled from "./star-filled.svg";
@@ -110,7 +111,8 @@ async function copyText(text: string) {
    * @param {'replace'|'push'} [historyMode] how the address bar entry is updated;
    *   omit to leave history untouched (when the browser already navigated).
    */
-  function render(hash: number, historyMode: "replace" | "push") {
+  async function render(hash: number, historyMode: "replace" | "push") {
+    const images = await images_promise;
     resetStars();
     const { equation, sides, colorModeIndex, colorSchemeIndex } =
       generateComplexEquation(hash);
@@ -130,12 +132,9 @@ async function copyText(text: string) {
         )
         .join(", ")}`,
     );
-    console.log(
-      `Plateau sides: ${sides < 3 ? "circle" : sides}, color mode: ${colorMode}`,
-    );
 
     disposeFractal?.();
-    disposeFractal = drawNewtonFractal(gl, {
+    disposeFractal = await drawNewtonFractal(gl, {
       equation,
       colorScheme,
       sides,
@@ -144,6 +143,7 @@ async function copyText(text: string) {
       cx: 0.0,
       cy: 0.0,
       radius: 0.02,
+      images,
     });
 
     currentHash = hash;
@@ -189,25 +189,25 @@ async function copyText(text: string) {
   });
 
   for (const star of stars) {
-    star.addEventListener('click', () => {
+    star.addEventListener("click", () => {
       if (ratingGiven) return;
       ratingGiven = true;
       star.src = starFilled;
 
-      fetch('https://fractal-hash-backend.mousetail.nl/submit', {
-        method: 'POST',
+      fetch("https://fractal-hash-backend.mousetail.nl/submit", {
+        method: "POST",
         body: JSON.stringify({
           equation: equationValue.textContent,
           colors: colorValue.textContent,
           mode: modeValue.textContent,
-          rating: +star.id.split('-')[1],
+          rating: +star.id.split("-")[1],
         }),
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        mode: 'cors',
+        mode: "cors",
       });
-    })
+    });
   }
 
   render(currentHash, "replace");

@@ -1,4 +1,3 @@
-
 *,
 *::before,
 *::after {
@@ -78,22 +77,22 @@ body {
 }
 
 #widget hr {
-    border-top: 1px solid white;
-    width: 100%;
-    height: 0;
+  border-top: 1px solid white;
+  width: 100%;
+  height: 0;
 }
 
 #widget a {
-    color: white;
+  color: white;
 }
 
 .stars {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
 
-    & img {
-        width: 1rem;
-        color: white;
-        cursor: pointer;
-    }
+  & img {
+    width: 1rem;
+    color: white;
+    cursor: pointer;
+  }
 }

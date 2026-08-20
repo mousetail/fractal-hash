@@ -1,5 +1,5 @@
 import { COLORIZE_PARAMS, ColorMode } from "./color-modes.js";
-import { ColorScheme } from "./color-scheme.js";
+import { ColorScheme, PALETTE_GLSL } from "./color-scheme.js";
 import { COMPLEX_GLSL, Equation, toGlslVec2 } from "./factors.js";
 
 const VERT_SRC = `#version 300 es
@@ -39,6 +39,8 @@ precision highp float;
 uniform vec2  u_resolution;
 uniform vec2  u_center;
 uniform float u_scale;
+
+uniform sampler2D u_texture;
 
 // Capture region around each zero: sides < 3 = circle, sides >= 3 = regular polygon
 uniform int   u_sides;
@@ -97,9 +99,7 @@ uniform vec3 u_pal_b;
 uniform vec3 u_pal_c;
 uniform vec3 u_pal_d;
 
-vec3 palette(float t) {
-    return u_pal_a + u_pal_b * cos(6.28318 * (u_pal_c * t + u_pal_d));
-}
+${PALETTE_GLSL}
 
 // The selected coloring mode, and the only thing it gets to see.
 vec3 colorize(${COLORIZE_PARAMS}) {
@@ -205,6 +205,7 @@ type NewtonsFractalParams = {
   cy: number;
   sides: number;
   radius: number;
+  images: Record<string, HTMLImageElement>;
 };
 /**
  * Renders a Newton's fractal for a generated equation using a WebGL2 shader.
@@ -220,8 +221,9 @@ export function drawNewtonFractal(
     cy,
     sides,
     radius,
+    images,
   }: NewtonsFractalParams,
-) {
+): () => void {
   const prog = createProgram(
     gl,
     VERT_SRC,
@@ -266,6 +268,38 @@ export function drawNewtonFractal(
   gl.uniform3fv(u("u_pal_b"), b);
   gl.uniform3fv(u("u_pal_c"), c);
   gl.uniform3fv(u("u_pal_d"), d);
+
+  const texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+
+  // Set pixel store parameters before loading texture data
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+
+  // Set texture parameters before loading data
+  gl.texParameteri(
+    gl.TEXTURE_2D,
+    gl.TEXTURE_MIN_FILTER,
+    gl.LINEAR_MIPMAP_LINEAR,
+  );
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+  if (!(colorScheme.imageName in images)) {
+    throw new Error(`Image not found: ${colorScheme.imageName}`);
+  }
+  // Load texture data
+  gl.texImage2D(
+    gl.TEXTURE_2D,
+    0,
+    gl.RGBA,
+    gl.RGBA,
+    gl.UNSIGNED_BYTE,
+    images[colorScheme.imageName],
+  );
+
+  // Generate mipmaps after setting parameters and loading data
+  gl.generateMipmap(gl.TEXTURE_2D);
+
+  gl.uniform1i(u("u_texture"), 0);
 
   gl.drawArrays(gl.TRIANGLES, 0, 6);
 
