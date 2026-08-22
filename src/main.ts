@@ -210,5 +210,8 @@ async function copyText(text: string) {
     });
   }
 
+  // Simple page-view tracking; the backend only counts the request.
+  fetch("https://fractal-hash-backend.mousetail.nl/ping", { mode: "cors" });
+
   render(currentHash, "replace");
 })();
